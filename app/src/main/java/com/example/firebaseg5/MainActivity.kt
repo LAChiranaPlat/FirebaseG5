@@ -4,6 +4,7 @@ import android.content.ContentValues.TAG
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.firebaseg5.databinding.ActivityMainBinding
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
@@ -19,40 +20,48 @@ class MainActivity : AppCompatActivity() {
         layout = ActivityMainBinding.inflate(layoutInflater)
         setContentView(layout.root)
 
-        //INTEGRACIÓN A FIREBASE
-
         val db = Firebase.firestore
+
+        var lista:ArrayList<Usuarios> = ArrayList()
+        var myAdapter:Adapter?=null
+
+        db.collection("Student")
+            .get()
+            .addOnSuccessListener {
+                for (document in it) {
+
+                    lista.add(Usuarios(document.data.get("nombres").toString(),document.data.get("apellidos").toString(),document.data.get("curso").toString(),document.id))
+                    myAdapter= Adapter(lista)
+                    layout.lista.layoutManager=LinearLayoutManager(this)
+                    layout.lista.adapter=myAdapter
+                }
+            }
+            .addOnFailureListener {  }
 
         layout.apply {
 
             btnSave.setOnClickListener {
                 // Create a new user with a first and last name
+                if(tilNameUser.editText?.text!!.isEmpty())
+                    return@setOnClickListener
+
                 val user = hashMapOf(
-                    "nombres" to tilName.editText?.text.toString(),
-                    "apellidos" to tilLName.editText?.text.toString(),
+                    "nombres" to tilNameUser.editText?.text.toString(),
+                    "apellidos" to "Apellido Agregado",
                     "curso" to "LAChirana Plat 2022"
                 )
 
-                //Añadir Regsitro
-
-               /* db.collection("Student")
-                    .add(user)
-                    .addOnSuccessListener { documentReference ->
-                        Log.d("x", "DocumentSnapshot added with ID: ${documentReference.id}")
-                        tilName.editText?.text?.clear()
-                        tilLName.editText?.text?.clear()
-                        tilName.editText?.requestFocus()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.w("x", "Error adding document", e)
-                    }*/
-
-                val coleccion=db.collection("ADK")
-                coleccion.document("Javascript_Experto").set(user)
+                db.collection("Student")
+                .add(user)
                     .addOnSuccessListener {
-                        tilLName.requestFocus()
-                        tilName.editText?.text!!.clear()
-                        tilLName.editText?.text!!.clear()
+
+                        lista.add(Usuarios(tilNameUser.editText?.text.toString(),"Apellido Agregado","LAChirana Plat 2022",it.id.toString()))
+                        myAdapter?.notifyDataSetChanged()
+
+                        tilNameUser.requestFocus()
+                        tilNameUser.editText?.text!!.clear()
+
+
                     }.addOnFailureListener { e ->
                         Log.w("x", "Error adding document", e)
 
@@ -62,6 +71,8 @@ class MainActivity : AppCompatActivity() {
 
 
             }
+
+        /*
             btnLeer.setOnClickListener {
 
                 db.collection("Student")
@@ -102,6 +113,9 @@ class MainActivity : AppCompatActivity() {
                     Log.d("Y",it.message.toString())
                 }
             }
+*/
+
+
 
         }
     }
